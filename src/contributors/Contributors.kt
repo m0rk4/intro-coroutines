@@ -1,9 +1,29 @@
 package contributors
 
-import contributors.Contributors.LoadingStatus.*
-import contributors.Variant.*
-import kotlinx.coroutines.*
-import tasks.*
+import contributors.Contributors.LoadingStatus.CANCELED
+import contributors.Contributors.LoadingStatus.COMPLETED
+import contributors.Contributors.LoadingStatus.IN_PROGRESS
+import contributors.Variant.BACKGROUND
+import contributors.Variant.BLOCKING
+import contributors.Variant.CALLBACKS
+import contributors.Variant.CHANNELS
+import contributors.Variant.CONCURRENT
+import contributors.Variant.NOT_CANCELLABLE
+import contributors.Variant.PROGRESS
+import contributors.Variant.SUSPEND
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import tasks.loadContributorsBackground
+import tasks.loadContributorsBlocking
+import tasks.loadContributorsCallbacks
+import tasks.loadContributorsChannels
+import tasks.loadContributorsConcurrent
+import tasks.loadContributorsNotCancellable
+import tasks.loadContributorsProgress
+import tasks.loadContributorsSuspend
 import java.awt.event.ActionListener
 import javax.swing.SwingUtilities
 import kotlin.coroutines.CoroutineContext
@@ -20,7 +40,7 @@ enum class Variant {
     CHANNELS          // Request7Channels
 }
 
-interface Contributors: CoroutineScope {
+interface Contributors : CoroutineScope {
 
     val job: Job
 
@@ -58,6 +78,7 @@ interface Contributors: CoroutineScope {
                 val users = loadContributorsBlocking(service, req)
                 updateResults(users, startTime)
             }
+
             BACKGROUND -> { // Blocking a background thread
                 loadContributorsBackground(service, req) { users ->
                     SwingUtilities.invokeLater {
@@ -65,6 +86,7 @@ interface Contributors: CoroutineScope {
                     }
                 }
             }
+
             CALLBACKS -> { // Using callbacks
                 loadContributorsCallbacks(service, req) { users ->
                     SwingUtilities.invokeLater {
@@ -72,24 +94,31 @@ interface Contributors: CoroutineScope {
                     }
                 }
             }
+
             SUSPEND -> { // Using coroutines
                 launch {
                     val users = loadContributorsSuspend(service, req)
                     updateResults(users, startTime)
                 }.setUpCancellation()
             }
+
             CONCURRENT -> { // Performing requests concurrently
-                launch {
+                launch(Dispatchers.Default) {
                     val users = loadContributorsConcurrent(service, req)
-                    updateResults(users, startTime)
+                    // create coroutine on Main (UI) thread and wait for its completion (join)
+                    withContext(Dispatchers.Main) {
+                        updateResults(users, startTime)
+                    }
                 }.setUpCancellation()
             }
+
             NOT_CANCELLABLE -> { // Performing requests in a non-cancellable way
                 launch {
                     val users = loadContributorsNotCancellable(service, req)
                     updateResults(users, startTime)
                 }.setUpCancellation()
             }
+
             PROGRESS -> { // Showing progress
                 launch(Dispatchers.Default) {
                     loadContributorsProgress(service, req) { users, completed ->
@@ -99,6 +128,7 @@ interface Contributors: CoroutineScope {
                     }
                 }.setUpCancellation()
             }
+
             CHANNELS -> {  // Performing requests concurrently and showing progress
                 launch(Dispatchers.Default) {
                     loadContributorsChannels(service, req) { users, completed ->
@@ -178,8 +208,7 @@ interface Contributors: CoroutineScope {
         val params = getParams()
         if (params.username.isEmpty() && params.password.isEmpty()) {
             removeStoredParams()
-        }
-        else {
+        } else {
             saveParams(params)
         }
     }
