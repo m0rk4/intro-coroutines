@@ -1,8 +1,16 @@
 package tasks
 
-import contributors.*
-import kotlinx.coroutines.*
-import kotlin.coroutines.coroutineContext
+import contributors.GitHubService
+import contributors.RequestData
+import contributors.User
+import contributors.log
+import contributors.logRepos
+import contributors.logUsers
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 
 @OptIn(DelicateCoroutinesApi::class)
 suspend fun loadContributorsNotCancellable(service: GitHubService, req: RequestData): List<User> {
@@ -15,7 +23,6 @@ suspend fun loadContributorsNotCancellable(service: GitHubService, req: RequestD
         // these coroutines at all
         GlobalScope.async(Dispatchers.Default) {
             log("starting loading for ${repo.name}")
-            delay(3000)
             service.getRepoContributors(req.org, repo.name)
                 .also { logUsers(repo, it) }
                 .bodyList()
