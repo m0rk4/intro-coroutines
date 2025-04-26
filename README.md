@@ -39,7 +39,7 @@ suspend fun loadData(): Int {
 When async creates coroutine on the same thread:
 
 ```kotlin
-val deferred: Deferred<Int> = async{ loadData() }
+val deferred: Deferred<Int> = async { loadData() }
 ```
 
 1. main coroutine is created on Main thread (`runBlocking`)
@@ -50,3 +50,8 @@ val deferred: Deferred<Int> = async{ loadData() }
 6. releases main thread and resumes main coroutine, main coroutine prints 42 and finishes as well
 
 ![img_1.png](img_1.png)
+
+### Inheriting the context by default
+
+With structured concurrency, you can specify the major context elements (like dispatcher) once, when creating the
+top-level coroutine. All the nested coroutines then inherit the context and modify it only if needed.
