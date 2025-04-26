@@ -10,6 +10,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 
 suspend fun loadContributorsConcurrent(service: GitHubService, req: RequestData): List<User> = coroutineScope {
     val repos = service.getOrgRepos(req.org)
@@ -19,6 +20,7 @@ suspend fun loadContributorsConcurrent(service: GitHubService, req: RequestData)
     repos.map { repo ->
         async(Dispatchers.Default) {
             log("starting loading for ${repo.name}")
+            delay(3000)
             service.getRepoContributors(req.org, repo.name)
                 .also { logUsers(repo, it) }
                 .bodyList()
