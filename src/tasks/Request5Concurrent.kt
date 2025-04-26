@@ -17,7 +17,7 @@ suspend fun loadContributorsConcurrent(service: GitHubService, req: RequestData)
         .bodyList()
 
     repos.map { repo ->
-        async(Dispatchers.Default) {
+        async {
             log("starting loading for ${repo.name}")
             service.getRepoContributors(req.org, repo.name)
                 .also { logUsers(repo, it) }

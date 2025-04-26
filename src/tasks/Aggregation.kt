@@ -12,4 +12,4 @@ import contributors.User
 fun List<User>.aggregate(): List<User> =
     this.groupBy({ it.login }) { it.contributions }
         .map { (login, contributions) -> User(login, contributions.sum()) }
-        .sortedByDescending { it.contributions }
+        .sortedWith(compareByDescending<User> { it.contributions }.thenByDescending { it.login })
