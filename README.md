@@ -55,3 +55,22 @@ val deferred: Deferred<Int> = async { loadData() }
 
 With structured concurrency, you can specify the major context elements (like dispatcher) once, when creating the
 top-level coroutine. All the nested coroutines then inherit the context and modify it only if needed.
+
+### Channels
+
+Channel is like a blocking queue, but 'suspendable' queue, when send() and receive() are suspended depends on channel
+type.
+
+```kotlin
+// 0 size: send() is suspended until receive() called and vice versa
+val rendezvousChannel = Channel<String>()
+
+// fixed size: send() is suspended if channel is full, receive is suspended if channel is empty
+val bufferedChannel = Channel<String>(10)
+
+// send() is not suspended - new element overrides next, receive() receives only last element (suspended if channel is empty) 
+val conflatedChannel = Channel<String>(CONFLATED)
+
+// unlimited size: send() is not suspended (danger for OOM), receive is suspended if channel is empty
+val unlimitedChannel = Channel<String>(UNLIMITED)
+```

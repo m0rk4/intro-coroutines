@@ -20,4 +20,5 @@ fun main() = runBlocking<Unit> {
             log(x)
         }
     }
+    log("Schedule 3 coroutines") // #1
 }
